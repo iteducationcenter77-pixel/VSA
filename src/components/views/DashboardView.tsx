@@ -118,11 +118,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="flex flex-wrap items-center gap-3">
             <button
+              onClick={onOpenAddStudent}
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5"
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>+ Add Student</span>
+            </button>
+
+            <button
               onClick={onOpenQRScanner}
               className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white font-bold text-sm shadow-xl shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5"
             >
               <QrCode className="w-5 h-5" />
-              <span>Scan QR Attendance</span>
+              <span>Launch Scanner</span>
             </button>
 
             <button
@@ -138,8 +146,117 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/15 transition-all"
             >
               <FileSpreadsheet className="w-4 h-4 text-indigo-300" />
-              <span>Generate Reports</span>
+              <span>Reports</span>
             </button>
+
+            <button
+              onClick={() => onNavigateToTab('settings')}
+              className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/15 transition-all"
+            >
+              <Settings className="w-4 h-4 text-amber-300" />
+              <span>Institute Settings</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 1.5 Quick Launch Operations Grid (Direct Access Cards for all Core Actions) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-500" />
+            <span>Quick Launch Operations &amp; Institute Tools</span>
+          </h3>
+          <span className="text-xs text-slate-500">All Core Functions Available Instantly</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Add New Student */}
+          <div
+            onClick={onOpenAddStudent}
+            className="group cursor-pointer p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-emerald-500/50 transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between">
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+            </div>
+            <div className="mt-4">
+              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Add New Student</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Register student profile, photo &amp; auto-generate QR code ID.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+              <span>+ Register Student</span>
+            </div>
+          </div>
+
+          {/* Card 2: Generate Smart ID Cards */}
+          <div
+            onClick={() => onNavigateToTab('students')}
+            className="group cursor-pointer p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-indigo-500/50 transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between">
+              <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <QrCode className="w-6 h-6" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+            </div>
+            <div className="mt-4">
+              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Smart ID Card Studio</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Print dual-sided printable ID cards with high-res QR barcodes.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
+              <span>Open ID Studio</span>
+            </div>
+          </div>
+
+          {/* Card 3: Reports & Excel Export */}
+          <div
+            onClick={() => onNavigateToTab('reports')}
+            className="group cursor-pointer p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-cyan-500/50 transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between">
+              <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition-colors">
+                <FileSpreadsheet className="w-6 h-6" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-500 transition-colors" />
+            </div>
+            <div className="mt-4">
+              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Generate Reports</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Export daily/monthly Excel sheets &amp; multi-course attendance logs.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center text-xs font-extrabold text-cyan-600 dark:text-cyan-400">
+              <span>View &amp; Export Reports</span>
+            </div>
+          </div>
+
+          {/* Card 4: Institute Settings & Branding */}
+          <div
+            onClick={() => onNavigateToTab('settings')}
+            className="group cursor-pointer p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-amber-500/50 transition-all flex flex-col justify-between"
+          >
+            <div className="flex items-start justify-between">
+              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                <Settings className="w-6 h-6" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
+            </div>
+            <div className="mt-4">
+              <h4 className="font-bold text-slate-900 dark:text-white text-sm">Institute Details &amp; Settings</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Update college name, code prefix, principal details &amp; address.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center text-xs font-extrabold text-amber-600 dark:text-amber-400">
+              <span>Edit Institute Profile</span>
+            </div>
           </div>
         </div>
       </div>
