@@ -13,21 +13,24 @@ import {
   Lock,
   Clock,
   Calendar,
-  Sparkles,
   CheckCircle2,
   ArrowRight,
-  Users,
+  MessageCircle,
+  Building2,
 } from 'lucide-react';
 
 // Modals
 import { QRScannerModal } from '@/components/QRScannerModal';
 import { ManualAttendanceModal } from '@/components/ManualAttendanceModal';
+import { InstituteInquiryModal } from '@/components/InstituteInquiryModal';
 
 export default function VSAPublicTerminalPage() {
-  const { instituteSettings, themeMode, toggleThemeMode, attendance, students } = useVectora();
+  const { instituteSettings, themeMode, toggleThemeMode, attendance } = useVectora();
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
-  const [activeModal, setActiveModal] = useState<'qrScanner' | 'manualAttendance' | null>(null);
+  const [activeModal, setActiveModal] = useState<
+    'qrScanner' | 'manualAttendance' | 'instituteInquiry' | null
+  >(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -65,12 +68,12 @@ export default function VSAPublicTerminalPage() {
                 <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
                   VSA — Vectora Smart Attendance System
                 </h1>
-                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                  Live Terminal
+                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  Campus Active
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {instituteSettings.institute_name} ({instituteSettings.institute_code})
+                {instituteSettings.institute_name} ({instituteSettings.institute_code}) Official Portal
               </p>
             </div>
           </div>
@@ -112,24 +115,20 @@ export default function VSAPublicTerminalPage() {
       </header>
 
       {/* Main Terminal Stage */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col justify-center">
-        {/* Title Banner */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col justify-center">
+        {/* Hero Title */}
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-bold mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
-            <span>Official Campus Check-In Kiosk</span>
-          </div>
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
             VSA — Vectora Smart Attendance System
           </h2>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-            Please place your Smart ID card in front of the camera or use the manual search portal to record your daily arrival and departure.
+            Automatic Check-In &amp; Check-Out Terminal. Scan your Smart ID card or enter your ID number below.
           </p>
         </div>
 
-        {/* Two Large Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full mb-12">
-          {/* QR Code Scanner Terminal Card */}
+        {/* Two Large Core Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto w-full mb-10">
+          {/* 1. QR Code Scanner Card */}
           <div
             onClick={() => setActiveModal('qrScanner')}
             className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white p-8 border border-indigo-500/30 shadow-2xl hover:shadow-indigo-600/20 cursor-pointer transition-all transform hover:-translate-y-1"
@@ -141,7 +140,7 @@ export default function VSAPublicTerminalPage() {
                   <QrCode className="w-8 h-8" />
                 </div>
                 <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  PRIMARY METHOD
+                  INSTANT SCANNER
                 </span>
               </div>
 
@@ -150,18 +149,21 @@ export default function VSAPublicTerminalPage() {
                   QR Code Attendance Scanner
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
-                  Instant webcam optical recognition with acoustic beep verification. Supports Smart ID badges and demo simulation cards.
+                  Direct mobile &amp; webcam optical scanner.
+                  <br />
+                  <span className="text-cyan-300 font-semibold">1st Scan: Check-In (Arrival)</span> |{' '}
+                  <span className="text-emerald-300 font-semibold">2nd Scan: Check-Out (Departure)</span>
                 </p>
               </div>
 
               <div className="pt-4 flex items-center justify-between border-t border-white/10 text-xs font-bold text-cyan-300">
-                <span>Launch Camera Scanner</span>
+                <span>Open Scanner Camera</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </div>
 
-          {/* Manual Attendance Entry Card */}
+          {/* 2. Manual Attendance Entry Card */}
           <div
             onClick={() => setActiveModal('manualAttendance')}
             className="group relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl cursor-pointer transition-all transform hover:-translate-y-1"
@@ -172,16 +174,16 @@ export default function VSAPublicTerminalPage() {
                   <UserCheck className="w-8 h-8" />
                 </div>
                 <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  FALLBACK METHOD
+                  MANUAL ENTRY
                 </span>
               </div>
 
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Manual Check-In Portal
+                  Manual Attendance Entry
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
-                  Search student by full name or VCI enrollment ID to record attendance manually when ID card is not present.
+                  Lookup student by official ID Number or Full Name to record arrival or departure time cleanly.
                 </p>
               </div>
 
@@ -193,7 +195,34 @@ export default function VSAPublicTerminalPage() {
           </div>
         </div>
 
-        {/* Live Today's Check-in Feed */}
+        {/* Want VSA for Your Institute? Sign Up / WhatsApp Contact Banner */}
+        <div className="max-w-4xl mx-auto w-full mb-10">
+          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-emerald-900 via-slate-900 to-indigo-950 text-white border border-emerald-500/30 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shrink-0">
+                <Building2 className="w-7 h-7" />
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-white">
+                  Want VSA — Vectora Smart Attendance for Your Institute?
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                  Deploy cloud Smart Attendance with ID card printing &amp; real-time reports for your college or academy.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveModal('instituteInquiry')}
+              className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition-all"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Sign Up / Contact via WhatsApp</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Today's Check-in Feed Strip */}
         <div className="max-w-4xl mx-auto w-full p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -211,7 +240,7 @@ export default function VSAPublicTerminalPage() {
           </div>
 
           {todayRecords.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
+            <div className="py-6 text-center text-xs text-slate-400">
               No check-in records for today yet. Scan a QR card above to log the first student!
             </div>
           ) : (
@@ -230,7 +259,7 @@ export default function VSAPublicTerminalPage() {
                     </div>
                   </div>
                   <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg shrink-0">
-                    {rec.arrival_time || 'Present'}
+                    {rec.departure_time ? `Out: ${rec.departure_time}` : rec.arrival_time || 'Present'}
                   </span>
                 </div>
               ))}
@@ -246,11 +275,16 @@ export default function VSAPublicTerminalPage() {
             © {new Date().getFullYear()} <span className="font-bold text-slate-800 dark:text-slate-200">VSA — Vectora Smart Attendance System</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="hover:text-indigo-600 dark:hover:text-indigo-400 font-medium">
-              Admin Portal
-            </Link>
+            <button
+              onClick={() => setActiveModal('instituteInquiry')}
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 font-semibold"
+            >
+              Institute Sign-Up Inquiry (+91 86383 73298)
+            </button>
             <span>•</span>
-            <span>Vercel Cloud Ready</span>
+            <Link href="/admin" className="hover:text-indigo-600 dark:hover:text-indigo-400 font-semibold">
+              Admin Login Portal
+            </Link>
           </div>
         </div>
       </footer>
@@ -261,6 +295,9 @@ export default function VSAPublicTerminalPage() {
       )}
       {activeModal === 'manualAttendance' && (
         <ManualAttendanceModal onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === 'instituteInquiry' && (
+        <InstituteInquiryModal onClose={() => setActiveModal(null)} />
       )}
     </div>
   );
