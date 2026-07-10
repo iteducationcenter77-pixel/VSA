@@ -19,7 +19,9 @@ import {
   Mail,
   MapPin,
   Calendar,
+  Edit,
 } from 'lucide-react';
+import { StudentEditModal } from '@/components/StudentEditModal';
 
 interface StudentsViewProps {
   onOpenAddStudent: () => void;
@@ -37,6 +39,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [selectedCourse, setSelectedCourse] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<Student | null>(null);
+  const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<Student | null>(null);
 
   const courses = Array.from(new Set(students.map((s) => s.course)));
 
@@ -257,6 +260,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
+                        onClick={() => setSelectedStudentForEdit(student)}
+                        title="Edit Student Profile & Photo"
+                        className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => {
                           if (confirm(`Delete student ${student.full_name}?`)) {
                             deleteStudent(student.id);
@@ -388,6 +398,14 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* STUDENT EDIT MODAL */}
+      {selectedStudentForEdit && (
+        <StudentEditModal
+          student={selectedStudentForEdit}
+          onClose={() => setSelectedStudentForEdit(null)}
+        />
       )}
     </div>
   );

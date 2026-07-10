@@ -373,7 +373,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedStudentForCard, setSelectedStudentForCard] = useState<Student | null>(null);
 
   useEffect(() => {
-    // Load persisted state from localStorage
+    // Load persisted state from localStorage first for instant display
     try {
       const savedSettings = localStorage.getItem('vsa_settings');
       if (savedSettings) setInstituteSettings(JSON.parse(savedSettings));
@@ -391,7 +391,50 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch {
       // Ignore storage read errors
     }
+
+    // Automatically sync & fetch latest live data from Vercel Cloud Database (/api/db)
+    const fetchCloudData = async () => {
+      try {
+        const [studRes, attRes] = await Promise.all([
+          fetch('/api/db?table=students'),
+          fetch('/api/db?table=attendance'),
+        ]);
+        if (studRes.ok) {
+          const studJson = await studRes.json();
+          if (Array.isArray(studJson.data) && studJson.data.length > 0) {
+            setStudents(studJson.data);
+            localStorage.setItem('vsa_students', JSON.stringify(studJson.data));
+          }
+        }
+        if (attRes.ok) {
+          const attJson = await attRes.json();
+          if (Array.isArray(attJson.data) && attJson.data.length > 0) {
+            setAttendance(attJson.data);
+            localStorage.setItem('vsa_attendance', JSON.stringify(attJson.data));
+          }
+        }
+      } catch {
+        // Silently fall back to local storage if offline or database not yet configured
+      }
+    };
+    fetchCloudData();
   }, []);
+
+  // Background cloud database push helper
+  const syncToVercelCloud = async (studentsList: Student[], attendanceList: AttendanceRecord[]) => {
+    try {
+      await fetch('/api/db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          students: studentsList,
+          attendance: attendanceList,
+        }),
+      });
+    } catch {
+      // Silently retry later if network delay
+    }
+  };
 
   useEffect(() => {
     // Sync theme to document body and root variables
@@ -439,6 +482,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setStudents((prev) => {
       const next = [student, ...prev];
       localStorage.setItem('vsa_students', JSON.stringify(next));
+      syncToVercelCloud(next, attendance);
       return next;
     });
 
@@ -458,6 +502,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setStudents((prev) => {
       const next = prev.map((s) => (s.id === id ? { ...s, ...updated } : s));
       localStorage.setItem('vsa_students', JSON.stringify(next));
+      syncToVercelCloud(next, attendance);
       return next;
     });
     addToast('Student Updated', 'Student profile details have been saved successfully.', 'info');
@@ -467,6 +512,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setStudents((prev) => {
       const next = prev.filter((s) => s.id !== id);
       localStorage.setItem('vsa_students', JSON.stringify(next));
+      syncToVercelCloud(next, attendance);
       return next;
     });
     addToast('Student Removed', 'Student and related records have been deleted.', 'warning');
@@ -520,6 +566,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const updatedList = [newRecord, ...attendance];
       setAttendance(updatedList);
       localStorage.setItem('vsa_attendance', JSON.stringify(updatedList));
+      syncToVercelCloud(students, updatedList);
 
       playSoundEffect('success');
       try {
@@ -571,6 +618,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
       nextList[existingIndex] = updatedRecord;
       setAttendance(nextList);
       localStorage.setItem('vsa_attendance', JSON.stringify(nextList));
+      syncToVercelCloud(students, nextList);
 
       playSoundEffect('checkout');
 
@@ -618,6 +666,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
       nextList[existingIdx] = updated;
       setAttendance(nextList);
       localStorage.setItem('vsa_attendance', JSON.stringify(nextList));
+      syncToVercelCloud(students, nextList);
       addToast('Attendance Updated', `Manual attendance saved for ${student.full_name}`, 'success');
     } else {
       const newRec: AttendanceRecord = {
@@ -635,6 +684,7 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const nextList = [newRec, ...attendance];
       setAttendance(nextList);
       localStorage.setItem('vsa_attendance', JSON.stringify(nextList));
+      syncToVercelCloud(students, nextList);
       addToast('Manual Attendance Recorded', `Saved for ${student.full_name} (${student.student_id})`, 'success');
     }
     playSoundEffect('bell');
@@ -644,9 +694,10 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAttendance((prev) => {
       const next = prev.filter((a) => a.id !== id);
       localStorage.setItem('vsa_attendance', JSON.stringify(next));
+      syncToVercelCloud(students, next);
       return next;
     });
-    addToast('Record Deleted', 'Attendance entry has been removed.', 'warning');
+    addToast('Attendance Record Deleted', 'Entry has been removed from log.', 'info');
   };
 
   const toggleThemeMode = () => {

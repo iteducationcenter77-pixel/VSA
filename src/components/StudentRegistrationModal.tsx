@@ -113,19 +113,65 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
             <img
               src={formData.photo_url}
               alt="Avatar"
-              className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-500 shadow-md shrink-0"
+              className="w-20 h-24 rounded-2xl object-cover border-2 border-indigo-500 shadow-md shrink-0"
             />
-            <div className="flex-1 min-w-0">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                Student Photograph (Select Preset or Paste Image URL)
+            <div className="flex-1 min-w-0 space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                Student Photograph (Upload Photo or Select Preset)
               </label>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="cursor-pointer px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 inline-flex items-center gap-1.5 transition-all">
+                  <span>📷 Upload &amp; Auto-Crop Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                          const canvas = document.createElement('canvas');
+                          canvas.width = 300;
+                          canvas.height = 380;
+                          const ctx = canvas.getContext('2d');
+                          if (!ctx) return;
+                          const imgAspect = img.width / img.height;
+                          const targetAspect = 300 / 380;
+                          let drawW = 300, drawH = 380, offX = 0, offY = 0;
+                          if (imgAspect > targetAspect) {
+                            drawH = 380;
+                            drawW = img.width * (380 / img.height);
+                            offX = (300 - drawW) / 2;
+                          } else {
+                            drawW = 300;
+                            drawH = img.height * (300 / img.width);
+                            offY = (380 - drawH) / 2;
+                          }
+                          ctx.fillStyle = '#ffffff';
+                          ctx.fillRect(0, 0, 300, 380);
+                          ctx.drawImage(img, offX, offY, drawW, drawH);
+                          setFormData((prev) => ({ ...prev, photo_url: canvas.toDataURL('image/jpeg', 0.9) }));
+                        };
+                        img.src = event.target?.result as string;
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+                <span className="text-[11px] text-slate-500">Optimizes &amp; fits ID Card 4:5 portrait aspect</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 {AVATAR_PRESETS.map((url, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, photo_url: url }))}
-                    className={`w-9 h-9 rounded-xl overflow-hidden border-2 transition-all ${
+                    className={`w-8 h-8 rounded-xl overflow-hidden border-2 transition-all ${
                       formData.photo_url === url
                         ? 'border-indigo-600 scale-110 shadow-md'
                         : 'border-transparent opacity-70 hover:opacity-100'
@@ -135,14 +181,6 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
                   </button>
                 ))}
               </div>
-              <input
-                type="text"
-                name="photo_url"
-                value={formData.photo_url}
-                onChange={handleChange}
-                placeholder="https://..."
-                className="w-full px-3 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
-              />
             </div>
           </div>
 
