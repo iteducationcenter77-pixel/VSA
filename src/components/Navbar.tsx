@@ -12,12 +12,14 @@ import {
   Clock,
   UserCheck,
   PlusCircle,
+  Database,
 } from 'lucide-react';
 
 interface NavbarProps {
   onOpenQRScanner: () => void;
   onOpenManualAttendance?: () => void;
   onOpenAddStudent: () => void;
+  onOpenVercelDatabase?: () => void;
   onSearchQueryChange?: (query: string) => void;
   onSearchChange?: (query: string) => void;
   activeTab?: string;
@@ -27,6 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenQRScanner,
   onOpenManualAttendance,
   onOpenAddStudent,
+  onOpenVercelDatabase,
   onSearchQueryChange,
   onSearchChange,
 }) => {
@@ -123,6 +126,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>{currentTime || '10:00:00 AM'}</span>
             </div>
           </div>
+
+          {/* Cloud Database Sync Button */}
+          <button
+            onClick={onOpenVercelDatabase}
+            title="Vercel Cloud Database Hub"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-all border border-indigo-200 dark:border-indigo-800"
+          >
+            <Database className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Cloud DB</span>
+          </button>
 
           {/* Quick Add Student Button */}
           <button

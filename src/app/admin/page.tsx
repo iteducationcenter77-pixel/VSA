@@ -16,6 +16,7 @@ import { IDCardModal } from '@/components/IDCardModal';
 import { QRScannerModal } from '@/components/QRScannerModal';
 import { ManualAttendanceModal } from '@/components/ManualAttendanceModal';
 import { StudentRegistrationModal } from '@/components/StudentRegistrationModal';
+import { VercelDatabaseModal } from '@/components/VercelDatabaseModal';
 import {
   ShieldCheck,
   Lock,
@@ -36,7 +37,7 @@ export default function VSAInstitutePortalPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModal, setActiveModal] = useState<
-    'idCard' | 'qrScanner' | 'manualAttendance' | 'registerStudent' | null
+    'idCard' | 'qrScanner' | 'manualAttendance' | 'registerStudent' | 'vercelDb' | null
   >(null);
   const [selectedStudentIdForCard, setSelectedStudentIdForCard] = useState<string | null>(null);
 
@@ -119,6 +120,7 @@ export default function VSAInstitutePortalPage() {
       <Navbar
         onOpenQRScanner={() => setActiveModal('qrScanner')}
         onOpenAddStudent={() => setActiveModal('registerStudent')}
+        onOpenVercelDatabase={() => setActiveModal('vercelDb')}
         onSearchChange={(q) => {
           setSearchQuery(q);
           if (q && activeTab !== 'students') {
@@ -194,6 +196,10 @@ export default function VSAInstitutePortalPage() {
           onClose={() => setActiveModal(null)}
           onOpenIDCard={handleOpenIDCard}
         />
+      )}
+
+      {activeModal === 'vercelDb' && (
+        <VercelDatabaseModal onClose={() => setActiveModal(null)} />
       )}
     </div>
   );

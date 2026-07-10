@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",
+    "@vercel/postgres": "^0.10.0",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.42.2",
