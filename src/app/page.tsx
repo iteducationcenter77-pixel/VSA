@@ -22,14 +22,17 @@ import {
   Key,
   MapPin,
   Send,
+  ChevronRight,
+  AlertCircle,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function VSAAuthenticationPortalPage() {
+export default function VSAFacebookStyleAuthPage() {
   const router = useRouter();
   const { themeMode, toggleThemeMode, addToast, updateInstituteSettings } = useVectora();
 
-  // Tab: 'signin' | 'signup'
-  const [authTab, setAuthTab] = useState<'signin' | 'signup'>('signin');
+  // Mode: 'signin' | 'signup' | 'otp'
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'otp'>('signin');
 
   // SIGN IN STATE
   const [signInEmail, setSignInEmail] = useState('admin@vectora.edu');
@@ -37,7 +40,6 @@ export default function VSAAuthenticationPortalPage() {
   const [signInError, setSignInError] = useState<string | null>(null);
 
   // SIGN UP STATE
-  const [signUpStep, setSignUpStep] = useState<'details' | 'otp'>('details');
   const [signUpData, setSignUpData] = useState({
     instituteName: '',
     instituteCode: 'VCI',
@@ -63,38 +65,36 @@ export default function VSAAuthenticationPortalPage() {
       validPasswords.includes(signInPassword.trim())
     ) {
       sessionStorage.setItem('vsa_admin_auth', 'true');
-      addToast('Sign In Successful', 'Welcome to your VSA Institute Management Portal.', 'success');
+      addToast('Sign In Successful', 'Welcome to your VSA Institute Portal.', 'success');
       router.push('/admin');
     } else {
-      setSignInError('Invalid Email or Password. Try default: admin@vectora.edu / Vectora@2026');
+      setSignInError('Invalid Email or Password. Default: admin@vectora.edu / Vectora@2026');
     }
   };
 
-  // Handle Sign Up - Step 1: Send OTP
+  // Handle Sign Up - Send OTP
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     if (!signUpData.instituteName || !signUpData.email || !signUpData.phone || !signUpData.password) {
-      addToast('Missing Fields', 'Please complete all required institute details.', 'error');
+      addToast('Missing Fields', 'Please fill in all required institute registration details.', 'error');
       return;
     }
 
-    // Generate 6-digit OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(code);
-    setSignUpStep('otp');
+    setAuthMode('otp');
 
     addToast(
-      'Verification OTP Sent!',
-      `A verification code has been sent to ${signUpData.email}. (Demo OTP: ${code})`,
+      'Verification Code Sent',
+      `Sent a 6-digit verification pin to ${signUpData.email}. (Demo Pin: ${code})`,
       'info'
     );
   };
 
-  // Handle Sign Up - Step 2: Verify OTP & Complete Sign Up
+  // Handle Verify OTP
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     if (enteredOtp.trim() === generatedOtp || enteredOtp.trim() === '863837' || enteredOtp.trim() === '123456') {
-      // Save institute settings
       updateInstituteSettings({
         institute_name: signUpData.instituteName,
         institute_code: signUpData.instituteCode.toUpperCase() || 'VCI',
@@ -104,8 +104,7 @@ export default function VSAAuthenticationPortalPage() {
         address: signUpData.address,
       });
 
-      // Also notify WhatsApp +918638373298
-      const whatsappText = `*NEW VSA INSTITUTE SIGN-UP & VERIFICATION* 🚀
+      const whatsappText = `*NEW VSA INSTITUTE SIGN-UP VERIFIED* 🚀
 *Institute Name:* ${signUpData.instituteName} (${signUpData.instituteCode})
 *Contact Person:* ${signUpData.contactPerson}
 *Phone / WhatsApp:* ${signUpData.phone}
@@ -116,428 +115,375 @@ _Verified via Email OTP_`;
       const whatsappUrl = `https://wa.me/918638373298?text=${encodeURIComponent(whatsappText)}`;
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 
-      // Set session authenticated & redirect
       sessionStorage.setItem('vsa_admin_auth', 'true');
       addToast(
-        'Institute Account Created!',
-        `${signUpData.instituteName} verified successfully. Entering your VSA Portal.`,
+        'Institute Account Activated!',
+        `${signUpData.instituteName} verified successfully. Opening Portal.`,
         'success'
       );
       router.push('/admin');
     } else {
-      addToast('Invalid OTP', `Entered code does not match (${generatedOtp}).`, 'error');
+      addToast('Invalid Verification Pin', `Pin does not match (${generatedOtp}).`, 'error');
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors selection:bg-indigo-500 selection:text-white">
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 shadow-lg shadow-indigo-600/25 text-white font-black text-xl">
-              <span>VSA</span>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-950 flex items-center justify-center">
-                <ShieldCheck className="w-2.5 h-2.5 text-white" />
-              </div>
+    <div className="min-h-screen flex flex-col bg-[#f0f2f5] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors font-sans">
+      {/* Subtle Top Utility Bar */}
+      <div className="w-full px-6 py-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-indigo-600 dark:text-indigo-400">Vectora Cloud Enterprise</span>
+          <span>•</span>
+          <span>Multi-Campus Attendance System</span>
+        </div>
+
+        <button
+          onClick={toggleThemeMode}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-semibold"
+        >
+          {themeMode === 'dark' ? (
+            <>
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <span>Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Dark Mode</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Main Split Facebook/Instagram Inspired Layout */}
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
+        {/* LEFT COLUMN: Facebook-style Bold Branding & Tagline */}
+        <div className="lg:w-6/12 text-center lg:text-left space-y-6">
+          <div className="flex items-center justify-center lg:justify-start gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 shadow-xl shadow-indigo-600/30 flex items-center justify-center text-white font-black text-2xl tracking-tighter">
+              VSA
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                  VSA — Vectora Smart Attendance System
-                </h1>
-                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                  Cloud Enterprise SaaS
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Official Multi-Course Smart Attendance &amp; ID Card Platform
-              </p>
-            </div>
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
+              Vectora
+            </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleThemeMode}
-              title="Toggle Dark & Light Mode"
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
-            >
-              {themeMode === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
-            </button>
+          <p className="text-2xl sm:text-3xl font-medium text-slate-800 dark:text-slate-200 leading-snug max-w-lg mx-auto lg:mx-0">
+            Smart Attendance helps you connect and manage campus attendance effortlessly across courses.
+          </p>
+
+          <div className="hidden sm:grid grid-cols-2 gap-4 pt-4 max-w-lg mx-auto lg:mx-0">
+            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/80">
+              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <QrCode className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Live QR Scanner</div>
+                <div className="text-[11px] text-slate-500">Auto Arrival &amp; Departure</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/80">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Smart ID Studio</div>
+                <div className="text-[11px] text-slate-500">Portrait &amp; Landscape Print</div>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* Main Authentication & Feature Stage */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left 6 cols: Enterprise Feature Highlights */}
-          <div className="lg:col-span-6 space-y-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-extrabold">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-500" />
-              <span>Next-Gen Cloud Attendance Management</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-              Automate Campus Attendance &amp; Smart ID Studio
-            </h2>
-
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-              Sign in to your Institute Portal to operate live QR scanners, generate dual-sided Smart ID cards, track daily arrival/departure hours, and export multi-criteria audit reports.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  <QrCode className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">QR Code Check-In</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    1st scan records Arrival, 2nd scan records Departure with acoustic confirmation.
+        {/* RIGHT COLUMN: Iconic Floating Card Auth Container */}
+        <div className="w-full max-w-[440px]">
+          <AnimatePresence mode="wait">
+            {/* 1. SIGN IN VIEW */}
+            {authMode === 'signin' && (
+              <motion.div
+                key="signin"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+                className="bg-white dark:bg-slate-900 rounded-3xl p-7 shadow-2xl shadow-indigo-950/10 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-800 space-y-5"
+              >
+                <div className="space-y-1 pb-1">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    Sign in to Institute Portal
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Enter your authorized administrator credentials below.
                   </p>
                 </div>
-              </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Smart ID Card Studio</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Portrait &amp; Landscape ID generation with high-res PDF printing.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <BarChart3 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Real-Time Analytics</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Interactive charts, KPI gauges, and Excel spreadsheet export.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Institute Private Cloud</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Every institute manages their own isolated directory &amp; attendance terminal.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right 6 cols: Unified Sign In & Sign Up Auth Portal Box */}
-          <div className="lg:col-span-6">
-            <div className="w-full max-w-lg mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
-              {/* Tabs header */}
-              <div className="grid grid-cols-2 border-b border-slate-200 dark:border-slate-800">
-                <button
-                  onClick={() => {
-                    setAuthTab('signin');
-                    setSignUpStep('details');
-                  }}
-                  className={`py-4 text-sm font-extrabold transition-all text-center border-b-2 ${
-                    authTab === 'signin'
-                      ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  SIGN IN (PORTAL LOGIN)
-                </button>
-                <button
-                  onClick={() => {
-                    setAuthTab('signup');
-                    setSignUpStep('details');
-                  }}
-                  className={`py-4 text-sm font-extrabold transition-all text-center border-b-2 ${
-                    authTab === 'signup'
-                      ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
-                      : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  SIGN UP (NEW INSTITUTE)
-                </button>
-              </div>
-
-              {/* TAB 1: SIGN IN FORM */}
-              {authTab === 'signin' && (
-                <div className="p-8 space-y-6 animate-in fade-in duration-200">
-                  <div className="space-y-1">
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                      Access Your Institute Portal
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Sign in to open your attendance scanner and institute administration dashboard.
-                    </p>
+                <form onSubmit={handleSignIn} className="space-y-3.5">
+                  <div>
+                    <input
+                      type="text"
+                      required
+                      value={signInEmail}
+                      onChange={(e) => setSignInEmail(e.target.value)}
+                      placeholder="Email address or Institute ID"
+                      className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300/80 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                    />
                   </div>
 
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-indigo-500" />
-                        <span>Official Email Address</span>
-                      </label>
+                  <div>
+                    <input
+                      type="password"
+                      required
+                      value={signInPassword}
+                      onChange={(e) => setSignInPassword(e.target.value)}
+                      placeholder="Password"
+                      className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300/80 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                    />
+                  </div>
+
+                  {signInError && (
+                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{signInError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-base shadow-lg shadow-indigo-600/30 transition-all"
+                  >
+                    Log In
+                  </button>
+                </form>
+
+                {/* Demo credentials subtle hint */}
+                <div className="text-center">
+                  <span className="text-[11px] text-slate-400">
+                    Default login: <strong className="text-indigo-600 dark:text-indigo-400">admin@vectora.edu</strong> / <strong className="text-slate-700 dark:text-slate-300">Vectora@2026</strong>
+                  </span>
+                </div>
+
+                {/* Divider */}
+                <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-slate-200 dark:border-slate-800" />
+                  <span className="flex-shrink mx-4 text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">
+                    OR
+                  </span>
+                  <div className="flex-grow border-t border-slate-200 dark:border-slate-800" />
+                </div>
+
+                {/* Create New Institute CTA Button (Iconic Green/Emerald Button) */}
+                <div className="pt-1 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('signup')}
+                    className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#42b72a] hover:bg-[#36a420] text-white font-extrabold text-sm shadow-lg shadow-emerald-600/20 transition-all"
+                  >
+                    Create New Institute Account
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 2. SIGN UP VIEW (Create New Institute Account) */}
+            {authMode === 'signup' && (
+              <motion.div
+                key="signup"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+                className="bg-white dark:bg-slate-900 rounded-3xl p-7 shadow-2xl shadow-indigo-950/10 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-800 space-y-5"
+              >
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                      Create New Institute Account
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      It&apos;s quick and easy. Verify via Email OTP.
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSendOtp} className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div className="sm:col-span-2">
                       <input
                         type="text"
                         required
-                        value={signInEmail}
-                        onChange={(e) => setSignInEmail(e.target.value)}
-                        placeholder="admin@vectora.edu"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={signUpData.instituteName}
+                        onChange={(e) => setSignUpData({ ...signUpData, instituteName: e.target.value })}
+                        placeholder="Institute / College Name"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
-
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                        <KeyRound className="w-3.5 h-3.5 text-cyan-500" />
-                        <span>Security Password</span>
-                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={signUpData.instituteCode}
+                        onChange={(e) => setSignUpData({ ...signUpData, instituteCode: e.target.value })}
+                        placeholder="Code (VCI)"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white uppercase font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <input
+                        type="text"
+                        required
+                        value={signUpData.contactPerson}
+                        onChange={(e) => setSignUpData({ ...signUpData, contactPerson: e.target.value })}
+                        placeholder="Principal / Director Name"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="tel"
+                        required
+                        value={signUpData.phone}
+                        onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
+                        placeholder="Mobile / WhatsApp No"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <input
+                      type="email"
+                      required
+                      value={signUpData.email}
+                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                      placeholder="Official Email (for OTP verification)"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <input
+                        type="text"
+                        required
+                        value={signUpData.address}
+                        onChange={(e) => setSignUpData({ ...signUpData, address: e.target.value })}
+                        placeholder="City & State"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
                       <input
                         type="password"
                         required
-                        value={signInPassword}
-                        onChange={(e) => setSignInPassword(e.target.value)}
-                        placeholder="••••••••••••"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={signUpData.password}
+                        onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+                        placeholder="New Password"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
+                  </div>
 
-                    {signInError && (
-                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-semibold">
-                        {signInError}
-                      </div>
-                    )}
+                  <p className="text-[11px] text-slate-500 leading-tight pt-1">
+                    By clicking Send Verification OTP, you agree to receive a 6-digit verification code and WhatsApp onboarding confirmation.
+                  </p>
 
+                  <div className="pt-2">
                     <button
                       type="submit"
-                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 transition-all"
+                      className="w-full py-3 rounded-2xl bg-[#42b72a] hover:bg-[#36a420] text-white font-extrabold text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
                     >
-                      <span>Sign In &amp; Launch Portal</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <Send className="w-4 h-4" />
+                      <span>Send Verification OTP</span>
                     </button>
-                  </form>
-
-                  {/* Helper box */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                      Demo Official Credentials
-                    </span>
-                    <div className="text-xs font-mono text-indigo-600 dark:text-indigo-400">
-                      Email: <span className="font-bold">admin@vectora.edu</span>
-                    </div>
-                    <div className="text-xs font-mono text-slate-700 dark:text-slate-300">
-                      Password: <span className="font-bold">Vectora@2026</span>
-                    </div>
                   </div>
+                </form>
+
+                <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('signin')}
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    Already have an account? Log In
+                  </button>
                 </div>
-              )}
+              </motion.div>
+            )}
 
-              {/* TAB 2: SIGN UP FORM WITH EMAIL OTP VERIFICATION */}
-              {authTab === 'signup' && (
-                <div className="p-8 space-y-6 animate-in fade-in duration-200">
-                  {signUpStep === 'details' ? (
-                    <>
-                      <div className="space-y-1">
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                          Register Your Institute
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Complete the registration details below to verify via Email OTP and launch your VSA account.
-                        </p>
-                      </div>
-
-                      <form onSubmit={handleSendOtp} className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="sm:col-span-2">
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                              Institute / College Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={signUpData.instituteName}
-                              onChange={(e) => setSignUpData({ ...signUpData, instituteName: e.target.value })}
-                              placeholder="Pixel IT Education Center"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                              Code (ID Prefix) *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={signUpData.instituteCode}
-                              onChange={(e) => setSignUpData({ ...signUpData, instituteCode: e.target.value })}
-                              placeholder="VCI"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white uppercase font-mono focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                              Contact Person Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={signUpData.contactPerson}
-                              onChange={(e) => setSignUpData({ ...signUpData, contactPerson: e.target.value })}
-                              placeholder="Principal / Director"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                              Mobile / WhatsApp *
-                            </label>
-                            <input
-                              type="tel"
-                              required
-                              value={signUpData.phone}
-                              onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
-                              placeholder="+91 XXXXX XXXXX"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white font-mono focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Official Email (For OTP Verification) *
-                          </label>
-                          <input
-                            type="email"
-                            required
-                            value={signUpData.email}
-                            onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                            placeholder="principal@institute.edu"
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                              Address / City *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={signUpData.address}
-                              onChange={(e) => setSignUpData({ ...signUpData, address: e.target.value })}
-                              placeholder="Guwahati, Assam"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                              Set Portal Password *
-                            </label>
-                            <input
-                              type="password"
-                              required
-                              value={signUpData.password}
-                              onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                              placeholder="••••••••••••"
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                        </div>
-
-                        <button
-                          type="submit"
-                          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 transition-all"
-                        >
-                          <Send className="w-4 h-4" />
-                          <span>Send OTP &amp; Continue</span>
-                        </button>
-                      </form>
-                    </>
-                  ) : (
-                    /* STEP 2: OTP VERIFICATION VIEW */
-                    <div className="space-y-6 animate-in fade-in duration-300">
-                      <div className="text-center space-y-2">
-                        <div className="inline-flex p-3 rounded-2xl bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                          <Key className="w-6 h-6" />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                          Enter Email Verification OTP
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          We sent a 6-digit verification code to <span className="font-bold text-slate-800 dark:text-slate-200">{signUpData.email}</span>
-                        </p>
-                      </div>
-
-                      <form onSubmit={handleVerifyOtp} className="space-y-4">
-                        <div>
-                          <label className="block text-xs font-bold text-center text-slate-600 dark:text-slate-300 mb-2">
-                            6-Digit Verification Code
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={6}
-                            required
-                            value={enteredOtp}
-                            onChange={(e) => setEnteredOtp(e.target.value)}
-                            placeholder={generatedOtp}
-                            className="w-full text-center text-2xl tracking-widest font-mono font-black py-3 rounded-2xl bg-slate-100 dark:bg-slate-950 border-2 border-indigo-500 text-slate-900 dark:text-white focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-center text-xs text-indigo-700 dark:text-indigo-300 font-mono">
-                          Testing Verification Code: <span className="font-black text-sm">{generatedOtp}</span>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setSignUpStep('details')}
-                            className="flex-1 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold"
-                          >
-                            Back
-                          </button>
-                          <button
-                            type="submit"
-                            className="flex-[2] py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30"
-                          >
-                            Verify &amp; Create Institute Portal
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
+            {/* 3. EMAIL OTP VERIFICATION VIEW */}
+            {authMode === 'otp' && (
+              <motion.div
+                key="otp"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.18 }}
+                className="bg-white dark:bg-slate-900 rounded-3xl p-7 shadow-2xl shadow-indigo-950/10 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-800 space-y-5"
+              >
+                <div className="text-center space-y-1">
+                  <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mb-2">
+                    <Key className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    Enter Verification Code
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    We sent a 6-digit confirmation pin to <strong className="text-slate-800 dark:text-slate-200">{signUpData.email}</strong>
+                  </p>
                 </div>
-              )}
-            </div>
-          </div>
+
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      required
+                      value={enteredOtp}
+                      onChange={(e) => setEnteredOtp(e.target.value)}
+                      placeholder={generatedOtp}
+                      className="w-full text-center text-2xl tracking-widest font-mono font-black py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-indigo-500 text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-center text-xs text-indigo-700 dark:text-indigo-300 font-mono">
+                    Demo Pin: <span className="font-black text-sm">{generatedOtp}</span>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('signup')}
+                      className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-[2] py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-sm shadow-lg shadow-indigo-600/30"
+                    >
+                      Verify &amp; Enter Portal
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      </main>
+      </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="w-full py-6 text-center text-xs text-slate-500 dark:text-slate-500">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            © {new Date().getFullYear()} <span className="font-bold text-slate-800 dark:text-slate-200">VSA — Vectora Smart Attendance System</span>
+            © {new Date().getFullYear()} <span className="font-bold text-slate-700 dark:text-slate-300">VSA — Vectora Smart Attendance System</span>
           </div>
           <div className="flex items-center gap-4">
-            <span>Enterprise Multi-Course Cloud Architecture</span>
+            <span>Powered by Next.js 16 &amp; Supabase</span>
             <span>•</span>
-            <span>Vercel Deploy Ready</span>
+            <span>WhatsApp Verified</span>
           </div>
         </div>
       </footer>
