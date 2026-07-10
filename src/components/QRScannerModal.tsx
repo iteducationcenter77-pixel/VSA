@@ -29,6 +29,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ onClose }) => {
   } | null>(null);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const lastScannedRef = useRef<{ token: string; timestamp: number } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -74,6 +75,17 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ onClose }) => {
   }, []);
 
   const handleScanToken = (token: string) => {
+    const now = Date.now();
+    // Prevent camera from firing multiple times per second for the same QR card (4s camera lockout per scan)
+    if (
+      lastScannedRef.current &&
+      lastScannedRef.current.token === token &&
+      now - lastScannedRef.current.timestamp < 4000
+    ) {
+      return;
+    }
+    lastScannedRef.current = { token, timestamp: now };
+
     const res = recordQRScan(token);
     setScanResult({
       success: res.success,

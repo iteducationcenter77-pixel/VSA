@@ -542,6 +542,21 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // SECOND SCAN -> Check-out / Departure Time
       const currentRec = attendance[existingIndex];
       const { totalHours, totalMinutes } = calculateDuration(currentRec.arrival_time, nowTime);
+
+      // Enforce minimum 5-minute gap between arrival check-in and checkout scan
+      if (totalMinutes < 5) {
+        playSoundEffect('error');
+        const waitMsg = `Already Checked In at ${currentRec.arrival_time}. Please wait at least 5 minutes before recording Check-Out.`;
+        addToast('Check-Out Locked (Wait 5 mins)', `${student.full_name} - ${waitMsg}`, 'warning');
+        return {
+          success: false,
+          type: 'checkin' as const,
+          student,
+          record: currentRec,
+          message: waitMsg,
+        };
+      }
+
       const updatedStatus = determineAttendanceStatus(currentRec.arrival_time, nowTime, totalHours);
 
       const updatedRecord: AttendanceRecord = {
