@@ -18,7 +18,10 @@ interface StudentEditModalProps {
 }
 
 export function StudentEditModal({ student, onClose }: StudentEditModalProps) {
-  const { updateStudent, addToast } = useVectora();
+  const { students, updateStudent, addToast } = useVectora();
+
+  const uniqueCourses = Array.from(new Set(students.map((s) => s.course).filter(Boolean)));
+  const uniqueBatches = Array.from(new Set(students.map((s) => s.batch).filter(Boolean)));
 
   const [formData, setFormData] = useState({
     full_name: student.full_name,
@@ -194,10 +197,16 @@ export function StudentEditModal({ student, onClose }: StudentEditModalProps) {
               <input
                 type="text"
                 required
+                list="edit-course-suggestions"
                 value={formData.course}
                 onChange={(e) => setFormData({ ...formData, course: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
               />
+              <datalist id="edit-course-suggestions">
+                {uniqueCourses.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
 
             <div>
@@ -206,10 +215,16 @@ export function StudentEditModal({ student, onClose }: StudentEditModalProps) {
               </label>
               <input
                 type="text"
+                list="edit-batch-suggestions"
                 value={formData.batch}
                 onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
               />
+              <datalist id="edit-batch-suggestions">
+                {uniqueBatches.map((b) => (
+                  <option key={b} value={b} />
+                ))}
+              </datalist>
             </div>
 
             <div>

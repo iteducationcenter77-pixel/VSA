@@ -43,6 +43,13 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
 
   const autoId = generateNextStudentID(students, instituteSettings.institute_code);
 
+  const uniqueCourses = Array.from(
+    new Set([...students.map((s) => s.course).filter(Boolean), ...COURSES])
+  );
+  const uniqueBatches = Array.from(
+    new Set([...students.map((s) => s.batch).filter(Boolean), ...BATCHES])
+  );
+
   const [formData, setFormData] = useState({
     student_id: autoId,
     full_name: '',
@@ -53,9 +60,9 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
     date_of_birth: '2004-05-15',
     mobile: '',
     email: '',
-    address: 'Indiranagar, Bangalore',
-    course: COURSES[0],
-    batch: BATCHES[0],
+    address: '',
+    course: '',
+    batch: '',
     admission_date: getTodayDateString(),
     course_start_date: getTodayDateString(),
     course_end_date: '2026-12-31',
@@ -337,38 +344,44 @@ export const StudentRegistrationModal: React.FC<StudentRegistrationModalProps> =
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Enrolled Course *
+                  Enrolled Course (Type manually or choose recommendation) *
                 </label>
-                <select
+                <input
+                  type="text"
                   name="course"
+                  required
+                  list="course-suggestions"
                   value={formData.course}
                   onChange={handleChange}
+                  placeholder="e.g. Full Stack Web Engineering"
                   className="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
-                >
-                  {COURSES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
+                />
+                <datalist id="course-suggestions">
+                  {uniqueCourses.map((c) => (
+                    <option key={c} value={c} />
                   ))}
-                </select>
+                </datalist>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Batch Schedule *
+                  Batch Name / Timing (Type manually or choose recommendation) *
                 </label>
-                <select
+                <input
+                  type="text"
                   name="batch"
+                  required
+                  list="batch-suggestions"
                   value={formData.batch}
                   onChange={handleChange}
+                  placeholder="e.g. Morning Batch (09:00 AM - 01:00 PM)"
                   className="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
-                >
-                  {BATCHES.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
+                />
+                <datalist id="batch-suggestions">
+                  {uniqueBatches.map((b) => (
+                    <option key={b} value={b} />
                   ))}
-                </select>
+                </datalist>
               </div>
 
               <div className="grid grid-cols-3 gap-2 sm:col-span-2">
