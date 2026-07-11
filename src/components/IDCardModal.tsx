@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Student } from '@/types';
 import { useVectora } from '@/lib/store';
+import { formatImageUrl } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import {
   X,
@@ -160,13 +161,13 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                 <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
                   <div
                     style={{ backgroundColor: instituteSettings.primary_color }}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 overflow-hidden"
                   >
                     {instituteSettings.logo_url ? (
                       <img
-                        src={instituteSettings.logo_url}
+                        src={formatImageUrl(instituteSettings.logo_url)}
                         alt="logo"
-                        className="w-full h-full object-cover rounded-xl"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       instituteSettings.institute_code
@@ -184,7 +185,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                 <div className="flex flex-col items-center text-center my-1">
                   <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-md">
                     <img
-                      src={student.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}
+                      src={formatImageUrl(student.photo_url) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}
                       alt={student.full_name}
                       className="w-full h-full object-cover"
                     />
@@ -221,17 +222,25 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                   </div>
                 </div>
 
-                {/* QR Code & Authorized Signature Footer */}
+                {/* QR Code & Authorized Signature + Seal Stamp Footer */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                   <div className="p-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
                     <QRCodeCanvas value={student.qr_code_token} size={54} />
                   </div>
 
-                  <div className="flex flex-col items-end text-right">
-                    <div className="w-20 h-7 flex items-center justify-end overflow-hidden">
+                  <div className="relative flex flex-col items-end text-right">
+                    {/* Official Stamp/Seal overlay */}
+                    {(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url) && (
+                      <img
+                        src={formatImageUrl(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url)}
+                        alt="Official Seal"
+                        className="absolute -top-3 right-4 w-12 h-12 object-contain opacity-80 pointer-events-none"
+                      />
+                    )}
+                    <div className="w-24 h-8 flex items-center justify-end overflow-hidden relative z-10">
                       {instituteSettings.authorized_signature_url ? (
                         <img
-                          src={instituteSettings.authorized_signature_url}
+                          src={formatImageUrl(instituteSettings.authorized_signature_url)}
                           alt="Signature"
                           className="max-h-full max-w-full object-contain"
                         />
@@ -239,7 +248,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                         <span className="font-serif italic text-xs text-slate-700">Principal</span>
                       )}
                     </div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 relative z-10">
                       Authorized Signature
                     </span>
                   </div>
@@ -366,17 +375,24 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                     <span className="text-[9px] text-slate-400 font-mono">Scan for Attendance</span>
                   </div>
 
-                  <div className="text-right">
-                    <div className="h-6 flex items-center justify-end">
+                  <div className="relative text-right">
+                    {(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url) && (
+                      <img
+                        src={formatImageUrl(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url)}
+                        alt="Official Seal"
+                        className="absolute -top-3 right-4 w-11 h-11 object-contain opacity-80 pointer-events-none"
+                      />
+                    )}
+                    <div className="h-6 flex items-center justify-end relative z-10">
                       {instituteSettings.authorized_signature_url && (
                         <img
-                          src={instituteSettings.authorized_signature_url}
+                          src={formatImageUrl(instituteSettings.authorized_signature_url)}
                           alt="Signature"
                           className="max-h-full object-contain"
                         />
                       )}
                     </div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 relative z-10">
                       Authorized Signature
                     </span>
                   </div>

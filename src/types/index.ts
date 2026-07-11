@@ -12,6 +12,7 @@ export interface InstituteSettings {
   principal_name: string;
   authorized_signature_url: string;
   institute_stamp_url: string;
+  official_seal_url?: string;
   primary_color: string;
   secondary_color: string;
 }

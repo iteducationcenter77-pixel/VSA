@@ -2,63 +2,52 @@
 
 import React, { useState } from 'react';
 import { useVectora } from '@/lib/store';
+import { formatImageUrl } from '@/lib/utils';
 import {
   Settings,
   Building2,
   Palette,
-  Database,
   Save,
   Download,
-  Copy,
   ShieldCheck,
+  Upload,
+  Image as ImageIcon,
   CheckCircle2,
-  CloudLightning,
-  Info,
 } from 'lucide-react';
-
-const SUPABASE_SCHEMA_SQL = `-- Complete Vectora Smart Attendance Supabase SQL Schema
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-CREATE TABLE IF NOT EXISTS students (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  student_id TEXT UNIQUE NOT NULL,
-  full_name TEXT NOT NULL,
-  photo_url TEXT,
-  mobile TEXT NOT NULL,
-  course TEXT NOT NULL,
-  batch TEXT NOT NULL,
-  admission_date DATE DEFAULT CURRENT_DATE,
-  qr_code_token TEXT UNIQUE NOT NULL,
-  status TEXT DEFAULT 'Active',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS attendance (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  student_id TEXT NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-  student_name TEXT NOT NULL,
-  date DATE NOT NULL DEFAULT CURRENT_DATE,
-  arrival_time TIME,
-  departure_time TIME,
-  total_hours NUMERIC(5,2) DEFAULT 0,
-  status TEXT DEFAULT 'Present',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);`;
 
 export const SettingsView: React.FC = () => {
   const { instituteSettings, updateInstituteSettings, students, attendance, addToast } = useVectora();
 
   const [formData, setFormData] = useState({ ...instituteSettings });
-  const [copiedSql, setCopiedSql] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setFormData((prev) => ({ ...prev, [fieldName]: dataUrl }));
+        addToast(
+          'Image Attached',
+          `${fieldName.replace('_', ' ')} image converted successfully. Click Save Configuration to apply.`,
+          'success'
+        );
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
     updateInstituteSettings(formData);
+    addToast('Configuration Saved', 'All institute branding, logo, signature, and seal applied to ID cards.', 'success');
   };
 
   const handleBackupJSON = () => {
@@ -81,13 +70,6 @@ export const SettingsView: React.FC = () => {
     addToast('Backup Complete', 'All students and attendance records exported as JSON.', 'success');
   };
 
-  const handleCopySQL = () => {
-    navigator.clipboard.writeText(SUPABASE_SCHEMA_SQL);
-    setCopiedSql(true);
-    setTimeout(() => setCopiedSql(false), 2500);
-    addToast('SQL Copied', 'Paste this script in your Supabase SQL Editor.', 'info');
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Top Banner */}
@@ -98,12 +80,13 @@ export const SettingsView: React.FC = () => {
             <span>Institute & Branding Settings</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage institutional identity, ID card branding, colors, and Vercel cloud deployment schema
+            Customize ID card branding, institutional logo, authorized signatory, official seal stamp, and color theme
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={handleBackupJSON}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all border border-slate-200 dark:border-slate-700"
           >
@@ -171,16 +154,87 @@ export const SettingsView: React.FC = () => {
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Institute Logo Image URL
-                </label>
+              {/* 1. Institute Logo Upload */}
+              <div className="sm:col-span-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Institute Logo (Google Drive Link or Direct File Upload)
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all shadow-sm">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Logo Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'logo_url')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 <input
                   type="text"
                   name="logo_url"
                   value={formData.logo_url}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                  placeholder="Paste Google Drive shareable link or image URL..."
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono"
+                />
+                <p className="text-[10px] text-slate-500">
+                  Google Drive links are automatically converted to direct images for your ID card header.
+                </p>
+              </div>
+
+              {/* 2. Authorized Signature Upload */}
+              <div className="sm:col-span-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Authorized Signatory Signature Image
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all shadow-sm">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Signature PNG</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'authorized_signature_url')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  name="authorized_signature_url"
+                  value={formData.authorized_signature_url || ''}
+                  onChange={handleChange}
+                  placeholder="Transparent PNG signature image URL or upload directly..."
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono"
+                />
+              </div>
+
+              {/* 3. Official Seal / Round Stamp Upload */}
+              <div className="sm:col-span-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Official Round Seal / Stamp Image
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all shadow-sm">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Seal/Stamp Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'official_seal_url')}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  name="official_seal_url"
+                  value={formData.official_seal_url || formData.institute_stamp_url || ''}
+                  onChange={handleChange}
+                  placeholder="Round official institute stamp/seal URL or upload directly..."
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-mono"
                 />
               </div>
 
@@ -325,58 +379,6 @@ export const SettingsView: React.FC = () => {
               </button>
             </div>
           </form>
-
-          {/* Vercel & Supabase Cloud Environment Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <CloudLightning className="w-5 h-5 text-indigo-500" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Vercel Hosting & Supabase Environment Status
-                </h3>
-              </div>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                Vercel Ready
-              </span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-xs text-slate-700 dark:text-slate-300 space-y-2">
-              <div className="flex items-center gap-2 font-bold text-indigo-600 dark:text-indigo-400">
-                <Info className="w-4 h-4 shrink-0" />
-                <span>Zero-Config Vercel Environment Variables</span>
-              </div>
-              <p className="leading-relaxed">
-                When deployed on Vercel, simply configure your Supabase keys directly in the Vercel Project Environment Variables:
-              </p>
-              <div className="font-mono text-[11px] bg-slate-900 text-slate-200 p-2.5 rounded-xl space-y-1">
-                <div>NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co</div>
-                <div>NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key</div>
-              </div>
-              <p className="text-[11px] text-slate-500">
-                The application automatically detects Vercel environment variables and synchronizes student and attendance records in real-time.
-              </p>
-            </div>
-
-            {/* SQL Script snippet copy box */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Supabase Database Setup SQL Schema
-                </span>
-                <button
-                  onClick={handleCopySQL}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-xs font-semibold text-indigo-600 dark:text-indigo-400"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>{copiedSql ? 'Copied SQL!' : 'Copy SQL Script'}</span>
-                </button>
-              </div>
-
-              <pre className="p-3 rounded-xl bg-slate-950 text-slate-300 text-[10px] font-mono overflow-x-auto max-h-36">
-                {SUPABASE_SCHEMA_SQL}
-              </pre>
-            </div>
-          </div>
         </div>
 
         {/* Right 5 cols: Live Preview Card */}
@@ -399,9 +401,17 @@ export const SettingsView: React.FC = () => {
                 <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
                   <div
                     style={{ backgroundColor: formData.primary_color }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-[10px] shrink-0 overflow-hidden"
                   >
-                    {formData.institute_code}
+                    {formData.logo_url ? (
+                      <img
+                        src={formatImageUrl(formData.logo_url)}
+                        alt="logo"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      formData.institute_code
+                    )}
                   </div>
                   <div className="min-w-0">
                     <div className="text-[11px] font-black uppercase tracking-tight truncate">
@@ -438,8 +448,27 @@ export const SettingsView: React.FC = () => {
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[8px] text-slate-400">
-                  <span>Authorized Signature</span>
-                  <span className="font-bold text-indigo-600">{formData.institute_code} SMART CARD</span>
+                  <span>Authorized Sign</span>
+                  <div className="relative flex flex-col items-end">
+                    {(formData.official_seal_url || formData.institute_stamp_url) && (
+                      <img
+                        src={formatImageUrl(formData.official_seal_url || formData.institute_stamp_url)}
+                        alt="Seal"
+                        className="absolute -top-3 -right-1 w-9 h-9 object-contain opacity-80 pointer-events-none"
+                      />
+                    )}
+                    {formData.authorized_signature_url ? (
+                      <img
+                        src={formatImageUrl(formData.authorized_signature_url)}
+                        alt="Sign"
+                        className="h-5 object-contain relative z-10"
+                      />
+                    ) : (
+                      <span className="font-bold text-indigo-600 relative z-10">
+                        {formData.institute_code} SMART CARD
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
