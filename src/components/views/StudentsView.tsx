@@ -41,19 +41,25 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<Student | null>(null);
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<Student | null>(null);
 
-  const courses = Array.from(new Set(students.map((s) => s.course)));
+  const courses = Array.from(new Set((students || []).filter(Boolean).map((s) => s.course || 'General')));
 
   const query = searchQuery || localSearch;
 
-  const filteredStudents = students.filter((s) => {
+  const filteredStudents = (students || []).filter((s) => {
+    if (!s) return false;
+    const fullName = String(s.full_name || '');
+    const studentId = String(s.student_id || '');
+    const course = String(s.course || '');
+    const mobile = String(s.mobile || '');
+
     const matchesQuery =
       !query ||
-      s.full_name.toLowerCase().includes(query.toLowerCase()) ||
-      s.student_id.toLowerCase().includes(query.toLowerCase()) ||
-      s.course.toLowerCase().includes(query.toLowerCase()) ||
-      s.mobile.includes(query);
+      fullName.toLowerCase().includes(query.toLowerCase()) ||
+      studentId.toLowerCase().includes(query.toLowerCase()) ||
+      course.toLowerCase().includes(query.toLowerCase()) ||
+      mobile.includes(query);
 
-    const matchesCourse = selectedCourse === 'ALL' || s.course === selectedCourse;
+    const matchesCourse = selectedCourse === 'ALL' || course === selectedCourse;
     const matchesStatus = selectedStatus === 'ALL' || s.status === selectedStatus;
 
     return matchesQuery && matchesCourse && matchesStatus;

@@ -402,15 +402,52 @@ export const VectoraProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (studRes.ok) {
           const studJson = await studRes.json();
           if (Array.isArray(studJson.data) && studJson.data.length > 0) {
-            setStudents(studJson.data);
-            localStorage.setItem('vsa_students', JSON.stringify(studJson.data));
+            const cleanStudents: Student[] = studJson.data.map((s: any) => ({
+              id: String(s.id || s.student_id || Math.random().toString(36).substring(2, 9)),
+              student_id: String(s.student_id || 'VCI-0000'),
+              full_name: String(s.full_name || 'Unnamed Student'),
+              photo_url: String(s.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'),
+              father_name: String(s.father_name || ''),
+              mother_name: String(s.mother_name || ''),
+              gender: (s.gender || 'Other') as Student['gender'],
+              date_of_birth: String(s.date_of_birth || '2000-01-01'),
+              mobile: String(s.mobile || s.phone || ''),
+              email: String(s.email || ''),
+              address: String(s.address || ''),
+              course: String(s.course || s.course_name || 'General Course'),
+              batch: String(s.batch || s.batch_time || 'General Batch'),
+              admission_date: String(s.admission_date || s.enrollment_date || '2026-06-01'),
+              course_start_date: String(s.course_start_date || '2026-06-01'),
+              course_end_date: String(s.course_end_date || '2027-06-01'),
+              emergency_contact: String(s.emergency_contact || ''),
+              blood_group: String(s.blood_group || 'O+'),
+              status: (s.status || 'Active') as Student['status'],
+              remarks: String(s.remarks || ''),
+              qr_code_token: String(s.qr_code_token || s.qr_token || `VCI-TOKEN-${s.student_id || Math.random().toString(36).substring(2, 6)}`),
+              created_at: String(s.created_at || new Date().toISOString()),
+            }));
+            setStudents(cleanStudents);
+            localStorage.setItem('vsa_students', JSON.stringify(cleanStudents));
           }
         }
         if (attRes.ok) {
           const attJson = await attRes.json();
           if (Array.isArray(attJson.data) && attJson.data.length > 0) {
-            setAttendance(attJson.data);
-            localStorage.setItem('vsa_attendance', JSON.stringify(attJson.data));
+            const cleanAtt: AttendanceRecord[] = attJson.data.map((a: any) => ({
+              id: String(a.id || Math.random().toString(36).substring(2, 9)),
+              student_id: String(a.student_id || ''),
+              student_name: String(a.student_name || 'Student'),
+              date: String(a.date || getTodayDateString()),
+              arrival_time: a.arrival_time ? String(a.arrival_time) : null,
+              departure_time: a.departure_time ? String(a.departure_time) : null,
+              total_hours: Number(a.total_hours || 0),
+              total_minutes: Number(a.total_minutes || 0),
+              status: (a.status || 'Present') as AttendanceRecord['status'],
+              recorded_by: (a.recorded_by || 'QR Scanner') as AttendanceRecord['recorded_by'],
+              created_at: String(a.created_at || new Date().toISOString()),
+            }));
+            setAttendance(cleanAtt);
+            localStorage.setItem('vsa_attendance', JSON.stringify(cleanAtt));
           }
         }
       } catch {

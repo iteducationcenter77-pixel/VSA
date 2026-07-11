@@ -52,20 +52,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const { students, attendance, instituteSettings } = useVectora();
 
   const todayStr = getTodayDateString();
-  const todayRecords = attendance.filter((a) => a.date === todayStr);
+  const todayRecords = (attendance || []).filter((a) => a && a.date === todayStr);
 
-  const totalStudents = students.length;
-  const activeStudents = students.filter((s) => s.status === 'Active').length;
-  const newAdmissions = students.filter((s) => s.admission_date >= '2026-05-01').length;
+  const totalStudents = (students || []).length;
+  const activeStudents = (students || []).filter((s) => s && s.status === 'Active').length;
+  const newAdmissions = (students || []).filter((s) => s && (s.admission_date || '') >= '2026-05-01').length;
 
-  const presentToday = todayRecords.filter((a) => a.status !== 'Absent').length;
+  const presentToday = todayRecords.filter((a) => a && a.status !== 'Absent').length;
   const absentToday = Math.max(0, totalStudents - presentToday);
   const attendancePercentage = totalStudents > 0 ? Math.round((presentToday / totalStudents) * 100) : 0;
 
-  const checkInsToday = todayRecords.filter((a) => a.arrival_time !== null).length;
-  const checkOutsToday = todayRecords.filter((a) => a.departure_time !== null).length;
+  const checkInsToday = todayRecords.filter((a) => a && a.arrival_time !== null && a.arrival_time !== undefined).length;
+  const checkOutsToday = todayRecords.filter((a) => a && a.departure_time !== null && a.departure_time !== undefined).length;
 
-  const recentlyAdded = [...students].slice(0, 4);
+  const recentlyAdded = [...(students || [])].slice(0, 4);
 
   // Chart Data: Present vs Absent Today Donut
   const pieData = [
@@ -86,8 +86,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Course distribution data
   const courseCounts: Record<string, number> = {};
-  students.forEach((s) => {
-    const short = s.course.split(' ')[0] + ' ' + (s.course.split(' ')[1] || '');
+  (students || []).forEach((s) => {
+    if (!s) return;
+    const courseName = String(s.course || 'General Course');
+    const parts = courseName.split(' ');
+    const short = parts[0] + ' ' + (parts[1] || '');
     courseCounts[short] = (courseCounts[short] || 0) + 1;
   });
   const courseBarData = Object.entries(courseCounts).map(([name, count]) => ({

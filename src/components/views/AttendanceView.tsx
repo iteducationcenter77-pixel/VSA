@@ -29,12 +29,15 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   const todayStr = getTodayDateString();
-  const todayRecords = attendance.filter((a) => a.date === todayStr);
+  const todayRecords = (attendance || []).filter((a) => a && a.date === todayStr);
 
   const filteredRecords = todayRecords.filter((rec) => {
+    if (!rec) return false;
+    const name = String(rec.student_name || '');
+    const id = String(rec.student_id || '');
     const matchesSearch =
-      rec.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rec.student_id.toLowerCase().includes(searchQuery.toLowerCase());
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || rec.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
