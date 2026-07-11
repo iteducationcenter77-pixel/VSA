@@ -34,6 +34,7 @@ export default function VSAInstitutePortalPage() {
 
   // Dashboard navigation & modals
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModal, setActiveModal] = useState<
     'idCard' | 'qrScanner' | 'manualAttendance' | 'registerStudent' | 'vercelDb' | null
@@ -117,6 +118,7 @@ export default function VSAInstitutePortalPage() {
 
       {/* Navbar */}
       <Navbar
+        onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         onOpenQRScanner={() => setActiveModal('qrScanner')}
         onOpenAddStudent={() => setActiveModal('registerStudent')}
         onOpenVercelDatabase={() => setActiveModal('vercelDb')}
@@ -129,11 +131,19 @@ export default function VSAInstitutePortalPage() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar (Desktop + Mobile Hamburger Drawer) */}
         <Sidebar
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onOpenQRScanner={() => setActiveModal('qrScanner')}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setIsMobileMenuOpen(false);
+          }}
+          onOpenQRScanner={() => {
+            setActiveModal('qrScanner');
+            setIsMobileMenuOpen(false);
+          }}
         />
 
         {/* Main Content Area */}
