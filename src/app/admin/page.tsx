@@ -16,7 +16,6 @@ import { IDCardModal } from '@/components/IDCardModal';
 import { QRScannerModal } from '@/components/QRScannerModal';
 import { ManualAttendanceModal } from '@/components/ManualAttendanceModal';
 import { StudentRegistrationModal } from '@/components/StudentRegistrationModal';
-import { VercelDatabaseModal } from '@/components/VercelDatabaseModal';
 import {
   ShieldCheck,
   Lock,
@@ -196,10 +195,6 @@ export default function VSAInstitutePortalPage() {
           onClose={() => setActiveModal(null)}
           onOpenIDCard={handleOpenIDCard}
         />
-      )}
-
-      {activeModal === 'vercelDb' && (
-        <VercelDatabaseModal onClose={() => setActiveModal(null)} />
       )}
     </div>
   );

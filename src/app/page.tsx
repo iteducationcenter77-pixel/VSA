@@ -68,7 +68,7 @@ export default function VSAFacebookStyleAuthPage() {
       addToast('Sign In Successful', 'Welcome to your VSA Institute Portal.', 'success');
       router.push('/admin');
     } else {
-      setSignInError('Invalid Email or Password. Default: admin@vectora.edu / Vectora@2026');
+      setSignInError('Invalid Email or Password. Please try again.');
     }
   };
 
@@ -254,13 +254,6 @@ _Verified via Email OTP_`;
                     Log In
                   </button>
                 </form>
-
-                {/* Demo credentials subtle hint */}
-                <div className="text-center">
-                  <span className="text-[11px] text-slate-400">
-                    Default login: <strong className="text-indigo-600 dark:text-indigo-400">admin@vectora.edu</strong> / <strong className="text-slate-700 dark:text-slate-300">Vectora@2026</strong>
-                  </span>
-                </div>
 
                 {/* Divider */}
                 <div className="relative flex py-2 items-center">
