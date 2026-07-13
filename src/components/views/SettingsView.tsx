@@ -13,12 +13,56 @@ import {
   Upload,
   Image as ImageIcon,
   CheckCircle2,
+  Copy,
+  Database,
 } from 'lucide-react';
+
+const SUPABASE_SQL = `-- Run this once in your Supabase SQL Editor to store Students & Attendance:
+
+CREATE TABLE IF NOT EXISTS vsa_students (
+  id TEXT PRIMARY KEY,
+  student_id TEXT UNIQUE NOT NULL,
+  full_name TEXT NOT NULL,
+  photo_url TEXT,
+  father_name TEXT,
+  mother_name TEXT,
+  gender TEXT,
+  date_of_birth TEXT,
+  mobile TEXT,
+  email TEXT,
+  address TEXT,
+  course TEXT,
+  batch TEXT,
+  admission_date TEXT,
+  course_start_date TEXT,
+  course_end_date TEXT,
+  emergency_contact TEXT,
+  blood_group TEXT,
+  status TEXT,
+  remarks TEXT,
+  qr_code_token TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS vsa_attendance (
+  id TEXT PRIMARY KEY,
+  student_id TEXT NOT NULL,
+  student_name TEXT NOT NULL,
+  date TEXT NOT NULL,
+  arrival_time TEXT,
+  departure_time TEXT,
+  total_hours NUMERIC DEFAULT 0,
+  total_minutes INTEGER DEFAULT 0,
+  status TEXT,
+  recorded_by TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);`;
 
 export const SettingsView: React.FC = () => {
   const { instituteSettings, updateInstituteSettings, students, attendance, addToast } = useVectora();
 
   const [formData, setFormData] = useState({ ...instituteSettings });
+  const [copiedSQL, setCopiedSQL] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -92,6 +136,47 @@ export const SettingsView: React.FC = () => {
           >
             <Download className="w-4 h-4 text-indigo-500" />
             <span>Backup Database JSON</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Supabase SQL Verification Banner */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-indigo-900/30 to-slate-900 border border-indigo-500/30 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-400">
+              <Database className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">
+                Supabase Full Database SQL Schema (Students + Attendance)
+              </h3>
+              <p className="text-xs text-slate-300 mt-0.5">
+                If attendance records don&apos;t save, run this SQL query once in your Supabase SQL Editor to create both tables.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(SUPABASE_SQL);
+              setCopiedSQL(true);
+              addToast('SQL Copied', 'Paste this query into your Supabase SQL Editor and run it.', 'success');
+              setTimeout(() => setCopiedSQL(false), 3000);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all"
+          >
+            {copiedSQL ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                <span>Copied SQL!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                <span>Copy SQL Command</span>
+              </>
+            )}
           </button>
         </div>
       </div>

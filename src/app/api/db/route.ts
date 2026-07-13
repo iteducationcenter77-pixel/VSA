@@ -19,14 +19,21 @@ export async function GET(request: Request) {
       const supabase = createClient(supabaseUrl, supabaseKey);
       const targetTable = table === 'students' ? 'vsa_students' : 'vsa_attendance';
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from(targetTable)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        // If table doesn't exist yet or query fails, return empty array gracefully
-        return NextResponse.json({ success: true, provider: 'supabase', data: [], note: error.message });
+        // Retry without created_at order if column missing
+        const fallback = await supabase.from(targetTable).select('*');
+        data = fallback.data;
+        error = fallback.error;
+      }
+
+      if (error) {
+        console.error(`Supabase GET error on ${targetTable}:`, error);
+        return NextResponse.json({ success: false, provider: 'supabase', data: [], note: error.message });
       }
 
       return NextResponse.json({ success: true, provider: 'supabase', data: data || [] });
@@ -104,9 +111,11 @@ export async function POST(request: Request) {
           created_at: s.created_at || new Date().toISOString(),
         }));
 
-        await supabase.from('vsa_students').upsert(cleanedStudents, { onConflict: 'student_id' });
+        const { error: studErr } = await supabase.from('vsa_students').upsert(cleanedStudents, { onConflict: 'student_id' });
+        if (studErr) console.error('Supabase students upsert error:', studErr);
       }
 
+      let attErr = null;
       if (Array.isArray(attendanceToUpsert) && attendanceToUpsert.length > 0) {
         const cleanedAttendance = attendanceToUpsert.map((a: any) => ({
           id: String(a.id),
@@ -122,12 +131,15 @@ export async function POST(request: Request) {
           created_at: a.created_at || new Date().toISOString(),
         }));
 
-        await supabase.from('vsa_attendance').upsert(cleanedAttendance, { onConflict: 'id' });
+        const { error } = await supabase.from('vsa_attendance').upsert(cleanedAttendance, { onConflict: 'id' });
+        attErr = error;
+        if (attErr) console.error('Supabase attendance upsert error:', attErr);
       }
 
       return NextResponse.json({
-        success: true,
+        success: !attErr,
         provider: 'supabase',
+        error: attErr ? attErr.message : null,
         syncedStudents: studentsToUpsert?.length || 0,
         syncedAttendance: attendanceToUpsert?.length || 0,
       });
