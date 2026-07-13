@@ -58,9 +58,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const activeStudents = (students || []).filter((s) => s && s.status === 'Active').length;
   const newAdmissions = (students || []).filter((s) => s && (s.admission_date || '') >= '2026-05-01').length;
 
-  const presentToday = todayRecords.filter((a) => a && a.status !== 'Absent').length;
-  const absentToday = Math.max(0, totalStudents - presentToday);
-  const attendancePercentage = totalStudents > 0 ? Math.round((presentToday / totalStudents) * 100) : 0;
+  const presentStudentIds = new Set(
+    todayRecords.filter((a) => a && a.status !== 'Absent').map((a) => a.student_id)
+  );
+  const presentToday = presentStudentIds.size;
+  const absentToday = Math.max(0, activeStudents - presentToday);
+  const attendancePercentage = activeStudents > 0 ? Math.round((presentToday / activeStudents) * 100) : 0;
 
   const checkInsToday = todayRecords.filter((a) => a && a.arrival_time !== null && a.arrival_time !== undefined).length;
   const checkOutsToday = todayRecords.filter((a) => a && a.departure_time !== null && a.departure_time !== undefined).length;
