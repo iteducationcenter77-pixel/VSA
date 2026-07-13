@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS vsa_attendance (
 );`;
 
 export const SettingsView: React.FC = () => {
-  const { instituteSettings, updateInstituteSettings, students, attendance, addToast } = useVectora();
+  const { instituteSettings, updateInstituteSettings, students, attendance, addToast, clearAllData } = useVectora();
 
   const [formData, setFormData] = useState({ ...instituteSettings });
   const [copiedSQL, setCopiedSQL] = useState(false);
@@ -128,7 +128,19 @@ export const SettingsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete all demo students and attendance records to start completely fresh?')) {
+                clearAllData();
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold transition-all border border-rose-500/30"
+          >
+            <span>Wipe All Demo Students &amp; Logs</span>
+          </button>
+
           <button
             type="button"
             onClick={handleBackupJSON}
@@ -450,6 +462,44 @@ export const SettingsView: React.FC = () => {
                       className="flex-1 px-3 py-2 text-xs font-mono rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white uppercase"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Admin Credentials */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-3">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Custom Admin Portal Login Credentials (Supabase)
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Admin Login Email / ID
+                  </label>
+                  <input
+                    type="text"
+                    name="admin_username"
+                    value={formData.admin_username || ''}
+                    onChange={handleChange}
+                    placeholder="admin@vectora.edu"
+                    className="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    Admin Login Password
+                  </label>
+                  <input
+                    type="password"
+                    name="admin_password"
+                    value={formData.admin_password || ''}
+                    onChange={handleChange}
+                    placeholder="Enter new password"
+                    className="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                  />
                 </div>
               </div>
             </div>

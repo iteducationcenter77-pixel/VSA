@@ -29,14 +29,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function VSAFacebookStyleAuthPage() {
   const router = useRouter();
-  const { themeMode, toggleThemeMode, addToast, updateInstituteSettings } = useVectora();
+  const { themeMode, toggleThemeMode, addToast, updateInstituteSettings, instituteSettings } = useVectora();
 
   // Mode: 'signin' | 'signup' | 'otp'
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'otp'>('signin');
 
-  // SIGN IN STATE
-  const [signInEmail, setSignInEmail] = useState('admin@vectora.edu');
-  const [signInPassword, setSignInPassword] = useState('Vectora@2026');
+  // SIGN IN STATE - Starts completely blank without open password hints
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
   const [signInError, setSignInError] = useState<string | null>(null);
 
   // SIGN UP STATE
@@ -57,8 +57,17 @@ export default function VSAFacebookStyleAuthPage() {
     e.preventDefault();
     setSignInError(null);
 
-    const validEmails = ['admin@vectora.edu', 'admin', 'info@pixel.edu', signUpData.email.toLowerCase()];
-    const validPasswords = ['Vectora@2026', '123456', 'admin123', signUpData.password];
+    const configuredUser = instituteSettings.admin_username || instituteSettings.email || 'admin@vectora.edu';
+    const configuredPass = instituteSettings.admin_password || '123456';
+
+    const validEmails = [
+      configuredUser.trim().toLowerCase(),
+      'admin@vectora.edu',
+      'admin',
+      'info@pixel.edu',
+      signUpData.email.toLowerCase(),
+    ];
+    const validPasswords = [configuredPass.trim(), 'Vectora@2026', '123456', 'admin123', signUpData.password];
 
     if (
       validEmails.includes(signInEmail.trim().toLowerCase()) &&
@@ -68,7 +77,7 @@ export default function VSAFacebookStyleAuthPage() {
       addToast('Sign In Successful', 'Welcome to your VSA Institute Portal.', 'success');
       router.push('/admin');
     } else {
-      setSignInError('Invalid Email or Password. Please try again.');
+      setSignInError('Invalid Email or Password. Please check your credentials.');
     }
   };
 
@@ -128,7 +137,7 @@ _Verified via Email OTP_`;
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f0f2f5] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors font-sans">
+    <div className="min-h-screen flex flex-col bg-white sm:bg-[#f0f2f5] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors font-sans">
       {/* Subtle Top Utility Bar */}
       <div className="w-full px-6 py-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
@@ -156,9 +165,9 @@ _Verified via Email OTP_`;
       </div>
 
       {/* Main Split Facebook/Instagram Inspired Layout */}
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
-        {/* LEFT COLUMN: Facebook-style Bold Branding & Tagline */}
-        <div className="lg:w-6/12 text-center lg:text-left space-y-6">
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-16 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16">
+        {/* LEFT COLUMN: Facebook-style Bold Branding & Tagline (Desktop Only) */}
+        <div className="hidden lg:block lg:w-6/12 text-center lg:text-left space-y-6">
           <div className="flex items-center justify-center lg:justify-start gap-3">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 shadow-xl shadow-indigo-600/30 flex items-center justify-center text-white font-black text-2xl tracking-tighter">
               VSA
@@ -206,9 +215,24 @@ _Verified via Email OTP_`;
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
                 transition={{ duration: 0.18 }}
-                className="bg-white dark:bg-slate-900 rounded-3xl p-7 shadow-2xl shadow-indigo-950/10 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-800 space-y-5"
+                className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-indigo-950/10 dark:shadow-black/40 border sm:border-slate-200/80 dark:border-slate-800 space-y-5"
               >
-                <div className="space-y-1 pb-1">
+                {/* Mobile-Only App Style Branding Header */}
+                <div className="block lg:hidden text-center pb-2 space-y-2.5">
+                  <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 shadow-xl shadow-indigo-600/30 flex items-center justify-center text-white font-black text-2xl tracking-tighter">
+                    VSA
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                      VSA Administration
+                    </h2>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Smart Campus &amp; Attendance Portal
+                    </p>
+                  </div>
+                </div>
+
+                <div className="hidden lg:block space-y-1 pb-1">
                   <h3 className="text-xl font-black text-slate-900 dark:text-white">
                     Sign in to Institute Portal
                   </h3>

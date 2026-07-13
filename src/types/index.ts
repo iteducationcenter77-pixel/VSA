@@ -15,6 +15,8 @@ export interface InstituteSettings {
   official_seal_url?: string;
   primary_color: string;
   secondary_color: string;
+  admin_username?: string;
+  admin_password?: string;
 }
 
 export interface Student {
