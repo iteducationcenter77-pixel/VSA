@@ -42,27 +42,96 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
+    addToast('Generating ID Card PDF...', 'Preparing exact ID-card size document.', 'info');
+
+    const imgElements = cardRef.current.querySelectorAll('img');
+    const originalSrcs: string[] = [];
+
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: null,
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: orientation === 'portrait' ? 'portrait' : 'landscape',
-        unit: 'mm',
-        format: orientation === 'portrait' ? [54, 86] : [86, 54],
-      });
-      if (orientation === 'portrait') {
-        pdf.addImage(imgData, 'PNG', 0, 0, 54, 86);
-      } else {
-        pdf.addImage(imgData, 'PNG', 0, 0, 86, 54);
+      // Pre-convert images to base64 data URLs to prevent CORS / tainted canvas errors
+      for (let i = 0; i < imgElements.length; i++) {
+        const img = imgElements[i];
+        originalSrcs.push(img.src);
+        try {
+          if (img.src && !img.src.startsWith('data:')) {
+            let converted = false;
+            try {
+              const response = await fetch(img.src, { mode: 'cors' });
+              if (response.ok) {
+                const blob = await response.blob();
+                const dataUrl = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result as string);
+                  reader.readAsDataURL(blob);
+                });
+                img.src = dataUrl;
+                converted = true;
+              }
+            } catch {
+              // Try secondary canvas draw approach below
+            }
+
+            if (!converted) {
+              const dataUrl = await new Promise<string>((resolve, reject) => {
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                tempImg.onload = () => {
+                  const c = document.createElement('canvas');
+                  c.width = tempImg.naturalWidth || 200;
+                  c.height = tempImg.naturalHeight || 200;
+                  const ctx = c.getContext('2d');
+                  if (ctx) {
+                    ctx.drawImage(tempImg, 0, 0);
+                    resolve(c.toDataURL('image/png'));
+                  } else {
+                    reject();
+                  }
+                };
+                tempImg.onerror = () => reject();
+                tempImg.src = img.src;
+              });
+              img.src = dataUrl;
+            }
+          }
+        } catch {
+          // Ignore fetch errors if CORS blocked, html2canvas will attempt direct draw
+        }
       }
+
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 4,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      // Restore original image srcs
+      for (let i = 0; i < imgElements.length; i++) {
+        imgElements[i].src = originalSrcs[i];
+      }
+
+      const isPortrait = orientation === 'portrait';
+      // Standard ISO/IEC 7810 ID-1 card dimensions: 54 mm x 86 mm
+      const cardWidthMm = isPortrait ? 54 : 86;
+      const cardHeightMm = isPortrait ? 86 : 54;
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF({
+        orientation: isPortrait ? 'portrait' : 'landscape',
+        unit: 'mm',
+        format: [cardWidthMm, cardHeightMm],
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, cardWidthMm, cardHeightMm);
       pdf.save(`${student.student_id}_ID_CARD.pdf`);
-      addToast('ID Card Downloaded', `PDF file saved for ${student.full_name}`, 'success');
-    } catch {
-      addToast('Download Error', 'Could not render PDF. Please use Print button.', 'error');
+      addToast('ID Card Downloaded', `Saved exact card-size PDF for ${student.full_name}`, 'success');
+    } catch (err) {
+      // Restore original image srcs in case of error
+      for (let i = 0; i < imgElements.length; i++) {
+        if (originalSrcs[i]) imgElements[i].src = originalSrcs[i];
+      }
+      addToast('Download Error', 'Could not render PDF. Please try again or use Print Card.', 'error');
     }
   };
 
@@ -165,6 +234,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                   >
                     {instituteSettings.logo_url ? (
                       <img
+                        crossOrigin="anonymous"
                         src={formatImageUrl(instituteSettings.logo_url)}
                         alt="logo"
                         className="w-full h-full object-cover"
@@ -185,6 +255,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                 <div className="flex flex-col items-center text-center my-1">
                   <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-indigo-500 shadow-md">
                     <img
+                      crossOrigin="anonymous"
                       src={formatImageUrl(student.photo_url) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}
                       alt={student.full_name}
                       className="w-full h-full object-cover"
@@ -232,6 +303,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                     {/* Official Stamp/Seal overlay */}
                     {(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url) && (
                       <img
+                        crossOrigin="anonymous"
                         src={formatImageUrl(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url)}
                         alt="Official Seal"
                         className="absolute -top-3 right-4 w-12 h-12 object-contain opacity-80 pointer-events-none"
@@ -240,6 +312,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                     <div className="w-24 h-8 flex items-center justify-end overflow-hidden relative z-10">
                       {instituteSettings.authorized_signature_url ? (
                         <img
+                          crossOrigin="anonymous"
                           src={formatImageUrl(instituteSettings.authorized_signature_url)}
                           alt="Signature"
                           className="max-h-full max-w-full object-contain"
@@ -330,6 +403,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                   <div className="col-span-4 flex flex-col items-center">
                     <div className="w-24 h-28 rounded-xl overflow-hidden border-2 border-indigo-500 shadow-md">
                       <img
+                        crossOrigin="anonymous"
                         src={student.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}
                         alt={student.full_name}
                         className="w-full h-full object-cover"
@@ -378,6 +452,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                   <div className="relative text-right">
                     {(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url) && (
                       <img
+                        crossOrigin="anonymous"
                         src={formatImageUrl(instituteSettings.official_seal_url || instituteSettings.institute_stamp_url)}
                         alt="Official Seal"
                         className="absolute -top-3 right-4 w-11 h-11 object-contain opacity-80 pointer-events-none"
@@ -386,6 +461,7 @@ export const IDCardModal: React.FC<IDCardModalProps> = ({ student: studentProp, 
                     <div className="h-6 flex items-center justify-end relative z-10">
                       {instituteSettings.authorized_signature_url && (
                         <img
+                          crossOrigin="anonymous"
                           src={formatImageUrl(instituteSettings.authorized_signature_url)}
                           alt="Signature"
                           className="max-h-full object-contain"
